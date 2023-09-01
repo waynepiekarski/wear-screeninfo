@@ -3,7 +3,7 @@
 
     <string name="app_name">Wear ScreenInfo</string>
     <string name="next_button">Next Page</string>
-    <string name="wear_button">Start Wearable</string>
+    <string name="prev_button">Prev Page</string>
     <string name="text_content">Text view for updates</string>
     <string name="resource_dpi_string">unknown?</string>
     <string name="resource_roundness_string">unsupported</string>
