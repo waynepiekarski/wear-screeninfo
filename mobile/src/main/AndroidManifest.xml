@@ -29,6 +29,7 @@
 
         <activity
             android:name=".FullscreenActivity"
+            android:exported="true"
             android:configChanges="keyboardHidden|screenSize"
             android:label="@string/app_name"
             android:theme="@style/FullscreenTheme" >
@@ -40,6 +41,7 @@
 
         <activity-alias
             android:name=".FullscreenActivityTV"
+            android:exported="true"
             android:banner="@drawable/tv_banner"
             android:targetActivity="net.waynepiekarski.screeninfo.FullscreenActivity" >
             <intent-filter>
