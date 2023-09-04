@@ -18,11 +18,8 @@
 package net.waynepiekarski.screeninfo;
 
 import android.app.Activity;
-import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
@@ -95,28 +92,22 @@ public class MyOutputManager {
         int realHeight;
 
         if (Build.VERSION.SDK_INT >= 17){
-            //new pleasant way to get real metrics
             DisplayMetrics realMetrics = new DisplayMetrics();
             display.getRealMetrics(realMetrics);
             realWidth = realMetrics.widthPixels;
             realHeight = realMetrics.heightPixels;
-
         } else if (Build.VERSION.SDK_INT >= 14) {
-            //reflection for this weird in-between time
             try {
                 Method mGetRawH = Display.class.getMethod("getRawHeight");
                 Method mGetRawW = Display.class.getMethod("getRawWidth");
                 realWidth = (Integer) mGetRawW.invoke(display);
                 realHeight = (Integer) mGetRawH.invoke(display);
             } catch (Exception e) {
-                //this may not be 100% accurate, but it's all we've got
                 realWidth = display.getWidth();
                 realHeight = display.getHeight();
                 Logging.debug ("Could not use reflection to get the real display metrics");
             }
-
         } else {
-            //This should be close, as lower API devices should not have window navigation bars
             realWidth = display.getWidth();
             realHeight = display.getHeight();
         }
@@ -144,41 +135,6 @@ public class MyOutputManager {
                 + "round-res=" + roundnessDir;
         Logging.debug("DPI string is:\n" + mDPI);
 
-        WifiManager wifiManager = (WifiManager)mActivity.getSystemService(Context.WIFI_SERVICE);
-        WifiInfo wifiInfo;
-        String wifiAddress = null;
-        try {
-            wifiInfo = wifiManager.getConnectionInfo();
-            wifiAddress = wifiInfo.getMacAddress();
-        } catch (SecurityException e) {
-            Logging.debug("Received exception while retrieving WiFi information, ignoring");
-        }
-        if (wifiAddress == null)
-            wifiAddress = "No Wifi";
-
-        BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
-        String btAddress = "No Bluetooth";
-        if (btAdapter != null)
-          btAddress = btAdapter.getAddress();
-
-        // Reconstitute the pairing device name from the model and the last 4 digits of the bluetooth MAC
-        String wearName;
-        if ((btAddress != null) && (btAddress.equals("02:00:00:00:00:00"))) {
-            wearName = "No BT Access";
-        } else if ((btAddress != null) && (!btAddress.equals("No Bluetooth"))) {
-            wearName = android.os.Build.MODEL;
-            String[] tokens = btAddress.split(":");
-            wearName += " " + tokens[4] + tokens[5];
-            wearName = wearName.toUpperCase();
-        } else {
-            wearName = "No Bluetooth";
-        }
-
-        mAddresses = "Pair=" + wearName + "\n"
-                + "BT=" + btAddress + "\n"
-                + "WiFi=" + wifiAddress;
-        Logging.debug("Address string is:\n" + mAddresses);
-
         refreshView();
     }
 
@@ -190,7 +146,6 @@ public class MyOutputManager {
     private String mBuild = "n/a";
     private String mSerial = "n/a";
     private String mAppInfo = "n/a";
-    private String mAddresses = "n/a";
     private String mFixedBox = "";
     private int mTextItem = 0;
     RelativeLayout mFixedBoxesView;
@@ -273,7 +228,7 @@ public class MyOutputManager {
     }
 
     // Change mNumPages whenever you adjust the switch() statement below
-    private final int mNumPages = 8;
+    private final int mNumPages = 7;
 
     public void refreshView() {
         if (mTextView == null) return; // Prevent crashes if window inset is called before layout inflate
@@ -281,12 +236,11 @@ public class MyOutputManager {
         switch (mTextItem) {
             case 0: visibleFixedBox(false); mTextView.setText(mDPI); break;
             case 1: mTextView.setText(mWindowInsetsFinal); break;
-            case 2: mTextView.setText(mAddresses); break;
-            case 3: mTextView.setText(mDevice); break;
-            case 4: mTextView.setText(mBuild); break;
-            case 5: mTextView.setText(mSerial); break;
-            case 6: mTextView.setText(mAppInfo); break;
-            case 7: visibleFixedBox(true); mTextView.setText(mFixedBox); break;
+            case 2: mTextView.setText(mDevice); break;
+            case 3: mTextView.setText(mBuild); break;
+            case 4: mTextView.setText(mSerial); break;
+            case 5: mTextView.setText(mAppInfo); break;
+            case 6: visibleFixedBox(true); mTextView.setText(mFixedBox); break;
             default: Logging.fatal("Unknown item " + mTextItem);
         }
     }
