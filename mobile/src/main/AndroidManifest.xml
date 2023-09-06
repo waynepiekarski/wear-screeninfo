@@ -2,14 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.waynepiekarski.screeninfo" >
 
-    <!-- Access Bluetooth APIs, but do not require them on devices that do not support it -->
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
-
-    <!-- Access WiFi APIs, but do not require them on devices that do not support it -->
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-feature android:name="android.hardware.wifi" android:required="false" />
-
     <!-- The docs at https://developer.android.com/training/tv/games/index.html#display
          are not clear, and having required=false translates into "gamepad required" on
          Google Play. Remove the line entirely and we support whatever input is available -->
@@ -17,10 +9,6 @@
 
     <!-- Do not require a touchscreen, so this works on Android TV -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
-
-    <!-- Required to provide a watch face in the wearable APK -->
-    <uses-permission android:name="com.google.android.permission.PROVIDE_BACKGROUND" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
