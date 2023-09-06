@@ -19,10 +19,6 @@ package net.waynepiekarski.screeninfo;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.v4.view.GestureDetectorCompat;
-import android.support.wearable.view.DismissOverlayView;
-import android.support.wearable.view.WatchViewStub;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowInsets;
@@ -35,70 +31,46 @@ public class MyActivity extends Activity implements View.OnClickListener {
     private TextView mTextView;
     private OverlayView mOverlayView;
     private MyOutputManager mMyOutputManager;
-    private DismissOverlayView mDismissOverlayView;
-    private GestureDetectorCompat mGestureDetector;
+    private RelativeLayout mLayoutView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
-        final WatchViewStub stub = (WatchViewStub) findViewById(R.id.watch_view_stub);
         mMyOutputManager = new MyOutputManager(this);
 
-        stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
+	mLayoutView = (RelativeLayout)findViewById(R.id.layout);
+	mTextView = (TextView)findViewById(R.id.text);
+	mOverlayView = (OverlayView)findViewById(R.id.overlay);
+	mMyOutputManager.setTextView(mTextView);
+
+	// Recursive add a listener for every View in the hierarchy, this is the only way to get all clicks
+	ListenerHelper.recursiveSetOnClickListener((RelativeLayout)findViewById(R.id.layout), MyActivity.this);
+
+	// Prevent display from sleeping
+	getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+	// Allow OverlayView to send the Canvas and View dimensions to MyOutputManager
+	mOverlayView.setMyOutputManager(mMyOutputManager);
+
+	// setOnApplyWindowInsetsListener does not seem to ever work, so wait for the View to be attached
+	// and then just grab the root window insets directly.
+        mLayoutView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
-            public void onLayoutInflated(WatchViewStub stub) {
-                Logging.debug("onLayoutInflated for WatchViewStub");
-                mTextView = (TextView)stub.findViewById(R.id.text);
-                mOverlayView = (OverlayView)stub.findViewById(R.id.overlay);
-                mDismissOverlayView = (DismissOverlayView)stub.findViewById(R.id.dismiss);
-                mMyOutputManager.setTextView(mTextView);
-
-                // Recursive add a listener for every View in the hierarchy, this is the only way to get all clicks
-                ListenerHelper.recursiveSetOnClickListener(stub, MyActivity.this);
-
-                // Prevent display from sleeping
-                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-                // Add a listener to handle closing the app on a long press to the activity
-                mDismissOverlayView.setIntroText("Long press to exit");
-                mDismissOverlayView.showIntroIfNecessary();
-                mGestureDetector = new GestureDetectorCompat(MyActivity.this, new GestureDetector.SimpleOnGestureListener(){
-                    @Override
-                    public void onLongPress (MotionEvent e){
-                        Logging.debug("Detected long press, showing exit overlay");
-                        mDismissOverlayView.show();
-                    }
-                });
-
-                // Allow OverlayView to send the Canvas and View dimensions to MyOutputManager
-                mOverlayView.setMyOutputManager(mMyOutputManager);
-            }
-        });
-
-        stub.setOnApplyWindowInsetsListener(new WatchViewStub.OnApplyWindowInsetsListener() {
-           @Override
-           public WindowInsets onApplyWindowInsets(View view, WindowInsets windowInsets) {
-               Logging.debug("onApplyWindowInsets for WatchViewStub, round=" + windowInsets.isRound());
-               stub.onApplyWindowInsets(windowInsets);
-               mMyOutputManager.handleWindowInsets(windowInsets);
-               // WatchViewStub seems to call onApplyWindowInsets() multiple times before
-               // the layout is inflated, so make sure we check the reference is valid.
-               if (mOverlayView != null)
-                   mOverlayView.setRound(windowInsets.isRound());
-               return windowInsets;
-           }
+	    public void onViewAttachedToWindow(View v) {
+		WindowInsets windowInsets = getWindow().getDecorView().getRootWindowInsets();
+		Logging.debug("onViewAttachedToWindow has WindowInsets=" + windowInsets);
+		mMyOutputManager.handleWindowInsets(windowInsets);
+		mOverlayView.setRound(windowInsets.isRound());
+	    }
+            @Override
+	    public void onViewDetachedFromWindow(View v) {
+	    }
         });
     }
 
     @Override
     public void onClick (View v) {
         mMyOutputManager.nextView();
-    }
-
-    // Deliver touch events from the activity to the long press detector
-    @Override
-    public boolean dispatchTouchEvent (MotionEvent e) {
-        return mGestureDetector.onTouchEvent(e) || super.dispatchTouchEvent(e);
     }
 }
